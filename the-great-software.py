@@ -19,90 +19,72 @@ class Wood(Enum):
     CEDAR = auto()
 
 class GuitarSpec:
-    def __init__(self, builder, model, typeG, back_wood, top_wood):
-        self.__builder = builder
-        self.__model = model
-        self.__typeG = typeG
-        self.__back_wood = back_wood
-        self.__top_wood = top_wood
-
-    def get_builder(self):
-        return self.__builder.name
-
-    def get_model(self):
-        return self.__model
-
-    def get_typeG(self):
-        return self.__typeG.name
-
-    def get_back_wood(self):
-        return self.__back_wood.name
-
-    def get_top_wood(self):
-        return self.__top_wood.name
+    def __init__(self, builder, model, typeG, back_wood, top_wood, num_strings=6):
+        self.builder = builder
+        self.model = model
+        self.typeG = typeG
+        self.back_wood = back_wood
+        self.top_wood = top_wood
+        self.num_strings = num_strings
 
     def matches(self, other_spec):
-        return (not other_spec.get_builder() or self.get_builder() == other_spec.get_builder()) and \
-               (not other_spec.get_model() or self.get_model() == other_spec.get_model()) and \
-               (not other_spec.get_typeG() or self.get_typeG() == other_spec.get_typeG()) and \
-               (not other_spec.get_back_wood() or self.get_back_wood() == other_spec.get_back_wood()) and \
-               (not other_spec.get_top_wood() or self.get_top_wood() == other_spec.get_top_wood())
+        if self.builder != other_spec.builder and other_spec.builder:
+            return False
+        if self.model != other_spec.model and other_spec.model:
+            return False
+        if self.typeG != other_spec.typeG and other_spec.typeG:
+            return False
+        if self.back_wood != other_spec.back_wood and other_spec.back_wood:
+            return False
+        if self.top_wood != other_spec.top_wood and other_spec.top_wood:
+            return False
+        if self.num_strings != other_spec.num_strings and other_spec.num_strings:
+            return False
+        return True
 
 class Guitar:
     def __init__(self, serial_number, price, spec):
-        self.__serial_number = serial_number
-        self.__price = price
-        self.__spec = spec
-
-    def get_serial_number(self):
-        return self.__serial_number
-
-    def get_price(self):
-        return self.__price
-
-    def set_price(self, new_price):
-        self.__price = new_price
-
-    def get_spec(self):
-        return self.__spec
+        self.serial_number = serial_number
+        self.price = price
+        self.spec = spec
 
     def __str__(self):
-        spec = self.get_spec()
-        return f"{spec.get_builder()} {spec.get_model()} {spec.get_typeG()} ({self.get_serial_number()})"
+        spec = self.spec
+        return (f"{spec.builder.name} {spec.model} {spec.typeG.name.lower()} guitar "
+                f"({self.serial_number})")
 
 class Inventory:
     def __init__(self):
-        self.__guitars = []
+        self.guitars = []
 
-    def add_guitar(self, serial_number, price, builder, model, typeG, back_wood, top_wood):
-        spec = GuitarSpec(builder, model, typeG, back_wood, top_wood)
+    def add_guitar(self, serial_number, price, builder, model, typeG, back_wood, top_wood, num_strings=6):
+        spec = GuitarSpec(builder, model, typeG, back_wood, top_wood, num_strings)
         guitar = Guitar(serial_number, price, spec)
-        self.__guitars.append(guitar)
-
-    def get_guitar(self, serial_number):
-        for guitar in self.__guitars:
-            if guitar.get_serial_number() == serial_number:
-                return guitar
-        return None
+        self.guitars.append(guitar)
 
     def search_guitar(self, search_spec):
-        for guitar in self.__guitars:
-            if guitar.get_spec().matches(search_spec):
-                return guitar
-        return None
+        matching_guitars = []
+        for guitar in self.guitars:
+            if guitar.spec.matches(search_spec):
+                matching_guitars.append(guitar)
+        return matching_guitars
 
 if __name__ == "__main__":
     inventory = Inventory()
-    inventory.add_guitar("V95693", 1499.95, Builder.FENDER, "Stratocaster", TypeG.ELECTRIC, Wood.ALDER, Wood.ALDER)
-    inventory.add_guitar("V95694", 1699.95, Builder.FENDER, "Telecaster", TypeG.ELECTRIC, Wood.MAHOGANY, Wood.MAPLE)
-    inventory.add_guitar("11277", 3999.95, Builder.MARTIN, "Collings", TypeG.ACOUSTIC, Wood.ROSEWOOD, Wood.ROSEWOOD)
+    inventory.add_guitar("V95693", 1499.95, Builder.FENDER, "Stratocaster", TypeG.ELECTRIC, Wood.ALDER, Wood.ALDER, 6)
+    inventory.add_guitar("V99999", 1599.95, Builder.FENDER, "Stratocaster", TypeG.ELECTRIC, Wood.ALDER, Wood.ALDER, 6)
+    inventory.add_guitar("V9857", 2000.99, Builder.TAYLOR, "Stratocaster", TypeG.ELECTRIC, Wood.MAPLE, Wood.MAPLE, 12)
 
-    what_erin_likes = GuitarSpec(Builder.MARTIN, "Collings", TypeG.ACOUSTIC, Wood.ROSEWOOD, Wood.ROSEWOOD)
-    guitar = inventory.search_guitar(what_erin_likes)
+    erin_likes = GuitarSpec(Builder.FENDER, "Stratocaster", TypeG.ELECTRIC, Wood.ALDER, Wood.ALDER, 6)
+    matching_guitars = inventory.search_guitar(erin_likes)
 
-    if guitar:
-        print(f"Erin, you might like this {guitar} guitar:\n"
-              f"{guitar.get_spec().get_back_wood()} back and sides,\n{guitar.get_spec().get_top_wood()} top.\n"
-              f"You can have it for only ${guitar.get_price()}!")
+    if matching_guitars:
+        print("Erin, you might like these:")
+        for guitar in matching_guitars:
+            spec = guitar.spec
+            print(f"\nGuitar: {guitar.serial_number} {spec.builder.name.lower()} {spec.model.lower()} {spec.typeG.name.lower()} guitar:")
+            print(f"{spec.back_wood.name.lower()} back and sides,")
+            print(f"{spec.top_wood.name.lower()} top, with {spec.num_strings} strings")
+            print(f"It can be yours for only ${guitar.price}!")
     else:
         print("Sorry, Erin, we have nothing for you.")
